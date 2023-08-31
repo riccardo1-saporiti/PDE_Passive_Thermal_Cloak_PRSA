@@ -6,6 +6,10 @@ To reproduce the results go to Thermal_nonlinear folder and use the following sc
 
 Script assemble_matrices.m  assemble necessary FEM matrices and put data into mesh_data  
 
-Script main_passive.m run the optimization algorithm.
+Script main_passive_stationary.m run the optimization algorithm in stationary conditions.
+
+The folder ufv_time_dependent.m contains analogous functions to run the optimization in time-dependent conditions.
+
+That two (2) .mat files: output_ufv_with_Hessian.mat and output_ufv_time_dep_hessian_2.mat have already been created to store the results for the paper.
 
 For the code of the linear thermal cloak paper take a look at: https://github.com/CaliShulz/PDE_ROM_thermal_cloak_PRSA
