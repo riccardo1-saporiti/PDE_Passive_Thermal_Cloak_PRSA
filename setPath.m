@@ -8,7 +8,6 @@ end
 
 % addpath(genpath(strcat(pwd,sslash,'RB_library')));
 addpath(genpath(strcat(pwd,sslash,'FEM_library')));
-addpath(genpath(strcat(pwd,sslash,'tensor_toolbox-v3.2.1')));
 addpath(genpath(strcat(pwd,sslash,'Thermal_nonlinear')));
 rmpath(genpath(strcat(pwd,sslash,'FEM_library',sslash,'LinearSolver',sslash,'Mumps',sslash,'Libraries')));
 
