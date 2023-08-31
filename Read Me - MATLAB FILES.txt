@@ -1,1 +1,0 @@
-To use the Tensor Toolbox go in "HOME", "Set Path" and "Add Folder...": "tensor_toolbox-v3.2.1". Open the latter folder at the second level.
