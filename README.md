@@ -1,4 +1,5 @@
 Code is tested on MATLAB R2022a, the Tensor Toolbox used is version 3.2.1.
+
 Run setPath.m to set up the paths involving the RedbKit package (add dependent paths), the Tensor Toolbox (credits to Brett W. Bader, Tamara G. Kolda, can be downloaded also from: https://www.tensortoolbox.org/) 
 
 go to Thermal_nonlinear folder 
