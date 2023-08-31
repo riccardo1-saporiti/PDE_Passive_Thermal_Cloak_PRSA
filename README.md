@@ -1,7 +1,5 @@
 
-Run setPath.m to start RedbKit package (add dependent paths)  
-
-To use the Tensor Toolbox (that can be alternatively downloaded from https://www.tensortoolbox.org/) go in "HOME", "Set Path" and "Add Folder...": "tensor_toolbox-v3.2.1". Open the latter folder at the second level.
+Run setPath.m to set up the paths involving the RedbKit package (add dependent paths), the Tensor Toolbox (credits to Brett W. Bader, Tamara G. Kolda, can be downloaded also from: https://www.tensortoolbox.org/) 
 
 go to Thermal_nonlinear folder 
 
