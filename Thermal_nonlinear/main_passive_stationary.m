@@ -8,7 +8,7 @@ elseif isunix
     sslash = '/';
 end
 
-addpath("useful_functions");
+addpath("useful_functions" , "results_folder");
 
 
 % Setup fonts for plots
@@ -16,7 +16,7 @@ font_label = 18;
 font_title = 19;
 font_legend = 10;
 
-load('mesh_data\data_setup_coarse_1_refinement_2_ufv.mat')
+load('mesh_data\data_setup_coarse_1_refinement_2_ufv_x_revert_source.mat')
 fonts_data.font_title = font_title;
 fonts_data.font_label = font_label;
 
@@ -27,7 +27,7 @@ T_dir = 0;
 I_s   = 100; %source intensity
 
 
-data_name = "data_setup_coarse_1_refinement_2_ufv";               % Change here for different mesh  
+data_name = "data_setup_coarse_1_refinement_2_ufv_x_revert_source";               % Change here for different mesh  
 data_name = strcat("mesh_data",sslash,data_name);    
 load(data_name);
 B_dd_u = FOM.B_dd_u;
@@ -110,9 +110,12 @@ b = [];
 Aeq = [];
 beq = []; 
 ub= [];
+param.constraint_type = 'u_f_v';
+param.control_type = 'u_f_v';
+param.b_c = 'dirichlet';
 
 tic
-[xsol,fval,history,grad_norm,lambda] = runfmincon_optimization(@( x ) cost_with_grad_optimization( x , param) , @( x ) constraint( x , param ) , z_0 , lb );
+[xsol,fval,history,grad_norm,lambda] = runfmincon_ufv_Hessian(@( x ) cost_with_grad_optimization( x , param) , @( x ) constraint( x , param ) , param , z_0 , lb );
 toc
 fval_history = [ history.fval ];
 
@@ -241,13 +244,10 @@ plot_field(fig,ctrl_data,ctrl_plot_data,fonts_data);
 
 
 %%
-constr_vect = lambda.ineqnonlin;
-constr_vect( constr_vect > 1e-3 ) = 1;
-constr_vect( constr_vect <= 1e-3 ) = 0;
-
 % Setup figures
 fig = gobjects(0);
 set(0,'DefaultFigureVisible','on');
+
 
 % Control field
 
@@ -305,10 +305,11 @@ ctrl_data.reduced.indexes      = 1:length(FOM.control_basis_index);
 fig(length(fig)+1)  = figure;
 plot_field(fig,ctrl_data,ctrl_plot_data,fonts_data);
 
-
+%%
 % Setup figures
 fig = gobjects(0);
 set(0,'DefaultFigureVisible','on');
+
 
 
 % Scattered field
@@ -353,6 +354,84 @@ cl_plot_data = sc_plot_data;
 cl_plot_data.title  = "Cloaked";
 fig(length(fig)+1)  = figure;
 [fig] = plot_field(fig,cl_data,cl_plot_data,fonts_data);
+
+
+
+%% Tracking error field 
+
+tracking_difference = FOM.E_obs * y_opt - FOM.E_obs * param.E * param.z;
+tracking_difference_coarse = FOM.E_obs * y_opt_coarse - FOM.E_obs * param.E * param.z;
+
+yf = zeros(Nz,1);
+yf( FOM.observation_basis_index,1 ) = abs(tracking_difference_coarse);
+sc_data.y    = full(yf);
+sc_data.mesh = FOM.MESH;
+
+[state_elements,~] = get_reduced_mesh(FOM.MESH,FOM.nodes_ocp);
+sc_data.reduced.vertices     = FOM.MESH.vertices(:,FOM.nodes_ocp);
+sc_data.reduced.elements     = state_elements; 
+sc_data.reduced.indexes      = FOM.nodes_ocp;
+
+min_plot = min( min( tracking_difference ) , min( tracking_difference_coarse )  );
+max_plot = max( max( tracking_difference ) , max( tracking_difference_coarse ) );
+max_max = max( abs( min_plot ) , max_plot );
+sc_plot_data.limits = [-max_max , max_max];
+sc_plot_data.title  = "tracking error";
+ fig(length(fig)+1)  = figure;
+ [fig] = plot_field(fig,sc_data,sc_plot_data,fonts_data);
+  hold on 
+r = 0.2;
+th = 0:pi/50:2*pi;
+x = 0;
+y=0;
+x_circle = r * cos(th) + x;
+y_circle = r * sin(th) + y;
+circles = plot(x_circle, y_circle);
+fill(x_circle, y_circle, 'white')
+% get_grey_obs_scrofa( to_save.shape.outer_vert , to_save.shape.obs_vert )  
+% hold off
+
+% 
+% outer_control_idx = intersect( FOM.observation_basis_index ,FOM.control_basis_index , 'stable' );
+% x = FOM.MESH.vertices(1,outer_control_idx);
+% y = FOM.MESH.vertices(2,outer_control_idx);
+% 
+% pgon_int = polyshape(x,y,'Simplify',true);
+% 
+% P = [x; y]; % coordinates / points 
+% c = mean(P,2); % mean/ central point 
+% d = P-c ; % vectors connecting the central point and the given points 
+% th = atan2(d(2,:),d(1,:)); % angle above x axis
+% [th, idx] = sort(th);   % sorting the angles 
+% P = P(:,idx); % sorting the given points
+% P = [P P(:,1)]; % add the first at the end to close the polygon 
+% % plot( P(1,:), P(2,:), '.-r');
+% 
+% x = [ P( 1 , : ) nan x_circle]; 
+% y = [ P( 2 , : ) nan y_circle]; 
+% pgon_int = polyshape(x,y,'Simplify',true);
+% 
+% plot(pgon_int,'FaceColor','black','FaceAlpha',1)
+% return 
+
+
+r=0.2;
+R=0.4;
+xf = 0;
+yf=0;
+Xf=0;
+Yf=0;
+t = linspace(0,2*pi,200);
+x = xf + r*cos(t);
+y = yf + r*sin(t);
+X = Xf + R*cos(t);
+Y = Yf + R*sin(t);
+fill(X,Y, 'black');
+fill(x,y, 'white');
+
+% L(1) = line(x,y,'color','w');
+% L(2) = line(X,Y,'color','w');
+axis equal
 
 
 

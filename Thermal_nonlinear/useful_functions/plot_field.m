@@ -66,6 +66,7 @@ colormap(jet);
 caxis(limits)
 view(0,90)
 h = colorbar;
+set(h, 'ylim', [min( field_data.y)  max(field_data.y)]) %if want to set these limits manually use this command
 
 end
 

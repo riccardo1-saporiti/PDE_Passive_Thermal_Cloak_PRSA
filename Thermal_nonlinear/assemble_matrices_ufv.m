@@ -26,7 +26,7 @@ addpath("useful_functions");
 % Load mesh as data file with vertices, boundaries alements and labels for
 % the various domains
 
-mesh_name = "coarse_1_refinement_2_ufv_x";            %the first number is referred to the number of refinements, the second to the location of the control
+mesh_name = "coarse_1_refinement_2_ufv_x_revert_source";            %the first number is referred to the number of refinements, the second to the location of the control
 
 %data_setup_coarse_2 contains data referred to mesh_obstacle_coarse_2
 set(0,'DefaultFigureVisible','on');
@@ -215,12 +215,29 @@ observation_basis_index = unique( [ elements(1,elements_obs) elements(2,elements
 
 %TODO mesh should be refined so that the control region is nice and smooth
 plot(vertices(1,control_basis_index),vertices(2,control_basis_index),'ok','MarkerFaceColor','c') 
-
+% 
+% load('control_basis_index_coarse_1_refinement.mat')
+% Interp_mat = zeros( length( control_basis_index ) , length( control_basis_index_coarse ) );
+% find_diag_el = find( control_basis_index_coarse == control_basis_index_coarse );
+% Interp_mat( find_diag_el ,find_diag_el ) = eye( length( find_diag_el ));
+% extra_nodes_interp = setdiff( control_basis_index , control_basis_index_coarse );
+% vertices_control = reshape( vertices( : , extra_nodes_interp ).' , length( extra_nodes_interp ) , [] , 2 );
+% vertices_control_intepr = reshape( vertices( : , control_basis_index_coarse ).' , [] , length( control_basis_index_coarse ) , 2 );
+% l2_dist_vertices_control = vecnorm( vertices_control - vertices_control_intepr , 2 , 3  );
+% 
+% for iii = 1 : length( extra_nodes_interp )
+%     num_avg = 2;
+%     [ ~ , idx_small ] = mink( l2_dist_vertices_control( iii , : ) , num_avg ) ; 
+%     Interp_mat( iii+length( control_basis_index_coarse) , idx_small ) = 1 / num_avg;
+% end
+% 
+% FOM.Interp_mat = Interp_mat; %matrix that extends a coarse control to a fine control.
 
 B_dd_u             = Bilinear_Assembler(MESH,FE_SPACE,'diffusion_i_c_1');    %tensor: Nq x Nq x Nu, with 
 %Nq = numer of rows of  E, Nu by control_basis_index.
 B_dd_u             = B_dd_u(nodes_ocp_in,nodes_ocp_in,control_basis_index);      % Extract necessary index from assembly
 B_dd_u_dir = B_dd_u( nodes_ocp_in , boundary_dof_ocp , control_basis_index );
+
 
 B_dd_f             = Bilinear_Assembler(MESH,FE_SPACE,'diffusion_i_c_2');    %tensor: Nq x Nq x Nu, with 
 %Nq = numer of rows of  E, Nu by control_basis_index.
@@ -237,6 +254,7 @@ B_dd_dir = B_dd( nodes_ocp_in , boundary_dof_ocp , control_basis_index );
 B_dl             = Bilinear_Assembler(MESH,FE_SPACE,'diffusion_dl');
 B_dl             = B_dl(nodes_ocp_in,nodes_ocp_in,control_basis_index);
 B_dl_dir = B_dl( nodes_ocp_in , boundary_dof_ocp , control_basis_index );
+
 
 M_u              = M(control_basis_index,control_basis_index);
 A_u              = A_d(control_basis_index,control_basis_index);

@@ -26,10 +26,10 @@ addpath("useful_functions");
 % Load mesh as data file with vertices, boundaries alements and labels for
 % the various domains
 
-mesh_name = "coarse_dislocated_control_0049";            % data_setup_coarse contains data referred to mesh_obstacle_coarse
+mesh_name = "coarse_dislocated_control_ctted_5-003";            % data_setup_coarse contains data referred to mesh_obstacle_coarse
 %data_setup_coarse_2 contains data referred to mesh_obstacle_coarse_2
 set(0,'DefaultFigureVisible','on');
-load(strcat("mesh_data",sslash,"mesh_obstacle_dislocated_control_coarse_0049"));
+load(strcat("mesh_data",sslash,"mesh_obstacle_disconnected_x_003"));
 %mesh_obstacle_coarse_2: mesh refined in the whole domain
 %mesh_obstacle_coarse_3: mesh refined around the control
 %mesh_obstacle_coarse_4: mesh refined in the region of the control: region2
@@ -276,7 +276,13 @@ M_obs      = M_obs_test;
 % temp = abs( M_OCP - M_obs );
 % disp( max( temp( : ) ) )
 
+%index of the nodes shared by the outer boundary of the cloak and the
+%observation region. Used for the plot of the tracking error field.
+outer_control_idx = intersect( observation_basis_index ,control_basis_index , 'stable' );
+plot(vertices(1,outer_control_idx),vertices(2,outer_control_idx),'ok','MarkerFaceColor','g') 
 
+FOM.outer_control_idx = outer_control_idx;
+FOM.observation_vertices = vertices( : , observation_basis_index );
 % Save necessary matrices (FOM = full order model)
 FOM.DATA            = DATA;
 FOM.FE_SPACE        = FE_SPACE;
