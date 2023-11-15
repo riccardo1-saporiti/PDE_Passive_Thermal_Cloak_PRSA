@@ -286,7 +286,7 @@ lext =length( u_opt( Nu + 1 : end ) );
 u_opt = [ zeros( Nu , 1 ) ; xsol( 1 : lext) ];
 f_opt=[zeros( Nu, 1) ; xsol( lext+1 : 2*lext)];
 v_opt=[zeros(Nu,1);xsol(2* lext +1:3*lext)];
-save( 'output_boar_ufv.mat' , 'u_opt' , 'f_opt' , 'v_opt' )
+save( 'output_thick_ufv.mat' , 'u_opt' , 'f_opt' , 'v_opt' )
 
 
 ii = 1; 
