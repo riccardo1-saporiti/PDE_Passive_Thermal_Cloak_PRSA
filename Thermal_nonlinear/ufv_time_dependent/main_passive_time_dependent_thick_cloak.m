@@ -349,7 +349,7 @@ end
 
 fig = gobjects(0);
 set(0,'DefaultFigureVisible','on');
-i_times = 5;
+i_times = 15;
 ctrl_data.name = "passive_control_u_fom";
 ctrl_data.y    = full( u_times );
 ctrl_data.mesh = FOM.MESH;

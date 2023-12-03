@@ -353,7 +353,7 @@ plot_field(fig,ctrl_data,ctrl_plot_data,fonts_data);
 %Select with i_times the time instant at which display the plot: select
 %from i_times = 1 to 10
 Ny = size( y_times , 1 );
-i_times = 14;
+i_times = 15;
 fig = gobjects(0);
 set(0,'DefaultFigureVisible','on');
 
@@ -520,7 +520,86 @@ w( end ) = 0.5;
 norm_l2l2 = ( w' * intqz_hist * dt );
 
 
+%% Tracking error field 
+i_times = 6;
 
+tracking_difference = FOM.E_obs * y_times_td( : , i_times ) - FOM.E_obs * param.E * z_times( : , i_times );
+tracking_difference_st = FOM.E_obs * y_times_st( : , i_times ) - FOM.E_obs * param.E  * z_times( : , i_times );
+
+yf = zeros( size( y_times_td ) );
+yf( FOM.observation_basis_index, i_times ) = abs(tracking_difference_st);
+sc_data.y    = full(yf);
+sc_data.mesh = FOM.MESH;
+
+[state_elements,~] = get_reduced_mesh(FOM.MESH,FOM.nodes_ocp);
+sc_data.reduced.vertices     = FOM.MESH.vertices(:,FOM.nodes_ocp);
+sc_data.reduced.elements     = state_elements; 
+sc_data.reduced.indexes      = FOM.nodes_ocp;
+
+min_plot = min( min( tracking_difference ) , min( tracking_difference_st )  );
+max_plot = max( max( tracking_difference ) , max( tracking_difference_st ) );
+max_max = max( abs( min_plot ) , max_plot );
+sc_plot_data.limits = [-max_max , max_max];
+sc_plot_data.title  = "tracking error";
+% Control lives on a reduced mesh, get reduced mesh
+sc_plot_data.tt = i_times;
+sc_plot_data.dt = dt;
+fig(length(fig)+1)  = figure;
+plot_field(fig,sc_data,sc_plot_data,fonts_data);
+
+  hold on 
+r = 0.2;
+th = 0:pi/50:2*pi;
+x = 0;
+y=0;
+x_circle = r * cos(th) + x;
+y_circle = r * sin(th) + y;
+circles = plot(x_circle, y_circle);
+fill(x_circle, y_circle, 'white')
+% get_grey_obs_scrofa( to_save.shape.outer_vert , to_save.shape.obs_vert )  
+% hold off
+
+% 
+% outer_control_idx = intersect( FOM.observation_basis_index ,FOM.control_basis_index , 'stable' );
+% x = FOM.MESH.vertices(1,outer_control_idx);
+% y = FOM.MESH.vertices(2,outer_control_idx);
+% 
+% pgon_int = polyshape(x,y,'Simplify',true);
+% 
+% P = [x; y]; % coordinates / points 
+% c = mean(P,2); % mean/ central point 
+% d = P-c ; % vectors connecting the central point and the given points 
+% th = atan2(d(2,:),d(1,:)); % angle above x axis
+% [th, idx] = sort(th);   % sorting the angles 
+% P = P(:,idx); % sorting the given points
+% P = [P P(:,1)]; % add the first at the end to close the polygon 
+% % plot( P(1,:), P(2,:), '.-r');
+% 
+% x = [ P( 1 , : ) nan x_circle]; 
+% y = [ P( 2 , : ) nan y_circle]; 
+% pgon_int = polyshape(x,y,'Simplify',true);
+% 
+% plot(pgon_int,'FaceColor','black','FaceAlpha',1)
+% return 
+
+
+r=0.2;
+R=0.4;
+xf = 0;
+yf=0;
+Xf=0;
+Yf=0;
+t = linspace(0,2*pi,200);
+x = xf + r*cos(t);
+y = yf + r*sin(t);
+X = Xf + R*cos(t);
+Y = Yf + R*sin(t);
+fill(X,Y, 'black');
+fill(x,y, 'white');
+
+% L(1) = line(x,y,'color','w');
+% L(2) = line(X,Y,'color','w');
+axis equal
 
 
 

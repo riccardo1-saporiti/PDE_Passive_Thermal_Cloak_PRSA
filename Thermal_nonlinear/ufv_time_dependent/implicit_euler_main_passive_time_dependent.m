@@ -28,7 +28,7 @@ I_s   = 100; %source intensity
 
 
 %% Assemble matrices
-data_name = "data_setup_coarse_boar_cloak_shape";             
+data_name = "data_setup_coarse_boar_cloak_shape";               
 data_name = strcat("mesh_data",sslash,data_name);    
 load(data_name);
 
@@ -78,7 +78,7 @@ param.tol_constraint = tol_constraint;
 
 t0 = 0;
 tf = 2;
-Nt = 4;
+Nt = 14;
 param.Nt = Nt;
 dt = ( tf - t0 ) / Nt;
 param.t0 = t0;
@@ -234,45 +234,13 @@ for t = t0 : dt : ( tf - dt )
 end
 
 
-M_G = zeros( Ny * ( Nt + 1 ) );
+M_G_cont_elem = M_u;
+M_G_elem = M_o;
+A_G_cont_elem = A_u;
 
-for ii = 1 : Nt + 1 
-    M_G( Ny * ( ii - 1 ) + 1 : Ny * ii  , Ny * ( ii - 1 ) + 1 : Ny * ii ) = M_o;
-end
-
-M_G( 1 : Ny , 1 : Ny ) = M_G( 1 : Ny , 1 : Ny ) * ( 1 - theta );
-M_G( end - Ny + 1 : end , end - Ny + 1 : end ) = M_G( end - Ny + 1 : end , end - Ny + 1 : end ) * theta;
-
-
-M_G_cont = zeros( Nu * ( Nt + 1 ) );
-
-for ii = 1 : Nt + 1 
-    M_G_cont( Nu * ( ii - 1 ) + 1 : Nu * ii  , Nu * ( ii - 1 ) + 1 : Nu * ii ) = M_u;
-end
-
-M_G_cont( 1 : Nu , 1 : Nu ) = M_G_cont( 1 : Nu , 1 : Nu ) * ( 1 - theta );
-M_G_cont( end - Nu + 1 : end , end - Nu + 1 : end ) = M_G_cont( end - Nu + 1 : end , end - Nu + 1 : end ) * theta;
-
-
-
-A_G_cont = zeros( Nu * ( Nt + 1 ) );
-
-for ii = 1 : Nt + 1 
-    A_G_cont( Nu * ( ii - 1 ) + 1 : Nu * ii  , Nu * ( ii - 1 ) + 1 : Nu * ii ) = A_u;
-end
-
-A_G_cont( 1 : Nu , 1 : Nu ) = A_G_cont( 1 : Nu , 1 : Nu ) * ( 1 - theta );
-A_G_cont( end - Nu + 1 : end , end - Nu + 1 : end ) = A_G_cont( end - Nu + 1 : end , end - Nu + 1 : end ) * theta;
-
-
-J = 0.5 * dt * transpose( y_opt - z_vect_cost ) * M_G * ( y_opt - z_vect_cost ) + 0.5 * dt * beta * transpose( u_opt ) * M_G_cont * u_opt + ... 
-    0.5 * dt * beta_g * transpose( u_opt ) * A_G_cont * u_opt + 0.5 * dt * xi * transpose( f_opt ) * M_G_cont * f_opt + ... 
-    0.5 * dt * xi_g * transpose( f_opt ) * A_G_cont * f_opt + 0.5 * dt * gamma * transpose( v_opt ) * M_G_cont * v_opt + ... 
-    0.5 * dt * gamma_g * transpose( v_opt ) * A_G_cont * v_opt;
-
-param.M_G = M_G;
-param.A_G_cont = A_G_cont;
-param.M_G_cont = M_G_cont;
+param.M_G_elem = M_G_elem;
+param.A_G_cont_elem = A_G_cont_elem;
+param.M_G_cont_elem = M_G_cont_elem;
 
 z_0 = [ u_opt(Nu+1:end) ; f_opt(Nu+1:end) ; v_opt(Nu+1:end) ];
 Acon = [];
@@ -281,13 +249,14 @@ Aeq = [];
 beq = []; 
 ub= [];
 lb =[];
-
-[xsol,fval,history,grad_norm] = runfmincon_analytic_Hessian(@( x ) cost_with_grad_u_f_v( x , param) , @( x ) constraint( x , param ) , param , z_0 , lb );
+[xsol,fval,history,grad_norm] = runfmincon_analytic_Hessian(@( x ) cost_with_grad_u_f_v_implicit_euler( x , param) , @( x ) constraint( x , param ) , param , z_0 , lb );
+save('boar_fine_Nt_14.mat' , 'xsol')
+return 
 lext =length( u_opt( Nu + 1 : end ) );
 u_opt = [ zeros( Nu , 1 ) ; xsol( 1 : lext) ];
 f_opt=[zeros( Nu, 1) ; xsol( lext+1 : 2*lext)];
 v_opt=[zeros(Nu,1);xsol(2* lext +1:3*lext)];
-% save( 'output_boar_ufv.mat' , 'u_opt' , 'f_opt' , 'v_opt' )
+
 
 ii = 1; 
 B_u_old = sparse( double( ttv( B_dd_u , u_opt( 1 : Nu ) , 3 ) ) );
@@ -349,7 +318,7 @@ end
 
 fig = gobjects(0);
 set(0,'DefaultFigureVisible','on');
-i_times = 5;
+i_times = 4;
 ctrl_data.name = "passive_control_u_fom";
 ctrl_data.y    = full( u_times );
 ctrl_data.mesh = FOM.MESH;
@@ -373,7 +342,7 @@ plot_field(fig,ctrl_data,ctrl_plot_data,fonts_data);
 
 fig = gobjects(0);
 set(0,'DefaultFigureVisible','on');
-i_times = 5;
+i_times = 15;
 ctrl_data.name = "passive_control_u_fom";
 ctrl_data.y    = full( f_times );
 ctrl_data.mesh = FOM.MESH;
@@ -397,7 +366,7 @@ plot_field(fig,ctrl_data,ctrl_plot_data,fonts_data);
 
 fig = gobjects(0);
 set(0,'DefaultFigureVisible','on');
-i_times = 5;
+i_times = 15;
 ctrl_data.name = "passive_control_u_fom";
 ctrl_data.y    = full( v_times );
 ctrl_data.mesh = FOM.MESH;
@@ -422,7 +391,7 @@ plot_field(fig,ctrl_data,ctrl_plot_data,fonts_data);
 
 fig = gobjects(0);
 set(0,'DefaultFigureVisible','on');
-i_times = 5;
+i_times = 15;
 ctrl_data.name = "passive_control_u_fom";
 ctrl_data.y    = full( lambda_1_times );
 ctrl_data.mesh = FOM.MESH;
@@ -444,7 +413,7 @@ plot_field(fig,ctrl_data,ctrl_plot_data,fonts_data);
 %Select with i_times the time instant at which display the plot: select
 %from i_times = 1 to 10
 Ny = size( y_times , 1 );
-i_times = 5;
+i_times = 14;
 fig = gobjects(0);
 set(0,'DefaultFigureVisible','on');
 
@@ -547,10 +516,8 @@ title( '$Eigenvector\:w_{1}$' , 'Interpreter' , 'Latex' )
 eta_y_history =zeros( size( u_times, 2 ) , 1 );
 param.E_obs = FOM.E_obs;
 intqz_hist =zeros( size( u_times, 2 ) , 1 );
-intqz_unc_hist =zeros( size( u_times, 2 ) , 1 );
 for i_times = 1 : size(u_times,2)
-    intqz_hist( i_times ) = ( y_times( : , i_times ) - param.E * z_times(:,i_times))' * M_G( Ny*(i_times-1)+1 : Ny*i_times , Ny*(i_times-1)+1:Ny*i_times ) * ( y_times(:,i_times)-param.E*z_times(:,i_times));
-    intqz_unc_hist( i_times ) = ( y_unc_times( : , i_times ) - param.E * z_times(:,i_times))' * M_G( Ny*(i_times-1)+1 : Ny*i_times , Ny*(i_times-1)+1:Ny*i_times ) * ( y_unc_times(:,i_times)-param.E*z_times(:,i_times));
+%     intqz_hist( i_times ) = ( y_times( : , i_times ) - param.E * z_times(:,i_times))' * M_G( Ny*(i_times-1)+1 : Ny*i_times , Ny*(i_times-1)+1:Ny*i_times ) * ( y_times(:,i_times)-param.E*z_times(:,i_times));
     num_mte_star = sum( ( param.E_obs * y_times( : , i_times) - param.E_obs * param.E* z_times(:,i_times) ) .^ 2 );
     num_mte = sum( (  param.E_obs * y_unc_times - param.E_obs * param.E *z_times(:,i_times) ) .^ 2);
     den_mte = size(A_u , 1 );
@@ -568,15 +535,6 @@ figure()
 plot( 1 : length( intqz_hist) , 1 - intqz_hist , 'o-'  )
 title('$1-||q_{opt}-z||^{2}_{L^2(\Omega_{obs})}$' , 'Interpreter' , 'Latex' , 'Fontsize' , 20 )
 xlabel('$Time\:[s]$', 'Interpreter' , 'Latex' , 'Fontsize' , 20 )
-
- %% Compute norm \| \|_{L^{2}(0,T;L^{2}(\Omega_{obs}))} 
-w = ones( length( intqz_hist ) , 1 );
-w( 1 ) = 0.5;
-w( end ) = 0.5;
-norm_l2l2 = ( w' * intqz_hist * dt );
-
-
-
 %%
 %tracking error
 y_track = y_times( : , end );
@@ -604,8 +562,6 @@ sc_plot_data.title  = "tracking error";
 sc_plot_data.tt = 1;
  fig(length(fig)+1)  = figure;
  [fig] = plot_field(fig,sc_data,sc_plot_data,fonts_data);
-
-
 
 
 

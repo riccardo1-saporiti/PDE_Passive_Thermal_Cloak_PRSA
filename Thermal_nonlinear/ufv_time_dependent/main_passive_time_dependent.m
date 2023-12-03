@@ -77,8 +77,8 @@ tol_constraint = 1e-7;
 param.tol_constraint = tol_constraint;
 
 t0 = 0;
-tf = 2;
-Nt = 14;
+tf = 4;
+Nt = 5;
 param.Nt = Nt;
 dt = ( tf - t0 ) / Nt;
 param.t0 = t0;
@@ -322,10 +322,10 @@ lambda_2_times = zeros( Nu , 1 );
 
 for ii = 1 : Nt + 1
 
-%         u_times( : , ii ) = u_opt( Nu * ( ii - 1 ) + 1 : Nu * ii );
-%         f_times( : , ii ) = f_opt( Nu * ( ii - 1 ) + 1 : Nu * ii );
-%         v_times(:,ii)=v_opt(Nu*(ii-1)+1:Nu*ii );
-%         y_times( : , ii ) = y_opt( Ny * ( ii - 1 ) + 1 : Ny * ii );
+        u_times( : , ii ) = u_opt( Nu * ( ii - 1 ) + 1 : Nu * ii );
+        f_times( : , ii ) = f_opt( Nu * ( ii - 1 ) + 1 : Nu * ii );
+        v_times(:,ii)=v_opt(Nu*(ii-1)+1:Nu*ii );
+        y_times( : , ii ) = y_opt( Ny * ( ii - 1 ) + 1 : Ny * ii );
         delta = ( u_times( : , ii ) - f_times( : , ii ) ) .^ 2 + 4 * v_times( : , ii ) .^ 2;
         lambda_1_times( : , ii ) =  ( 2 * mu_0 + u_times( : , ii ) + f_times( : , ii ) + sqrt( delta ) ) * 0.5;
         lambda_2_times( : , ii ) = ( 2 * mu_0 + u_times( : , ii ) + f_times( : , ii ) - sqrt( delta ) ) * 0.5;
@@ -348,7 +348,7 @@ end
 
 fig = gobjects(0);
 set(0,'DefaultFigureVisible','on');
-i_times = 5;
+i_times = 4;
 ctrl_data.name = "passive_control_u_fom";
 ctrl_data.y    = full( u_times );
 ctrl_data.mesh = FOM.MESH;
@@ -443,7 +443,7 @@ plot_field(fig,ctrl_data,ctrl_plot_data,fonts_data);
 %Select with i_times the time instant at which display the plot: select
 %from i_times = 1 to 10
 Ny = size( y_times , 1 );
-i_times = 2;
+i_times = 6;
 fig = gobjects(0);
 set(0,'DefaultFigureVisible','on');
 
