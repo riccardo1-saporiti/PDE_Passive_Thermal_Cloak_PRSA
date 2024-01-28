@@ -1,6 +1,13 @@
 clearvars
 clc
 close all
+%Solve the stationary optimization problem with a fine mesh or interpolates
+%the numerical results from a coarse to a fine mesh according to line 8-9.
+%For the plots, refer to Figure 8, Figure 9.
+
+plot_type = 'coarse_mesh_interp';
+% plot_type = 'fine_mesh';
+
 
 if ispc
     sslash = '\';
@@ -8,7 +15,7 @@ elseif isunix
     sslash = '/';
 end
 
-addpath("useful_functions");
+addpath("useful_functions" , "results_folder");
 
 
 % Setup fonts for plots
@@ -16,7 +23,7 @@ font_label = 18;
 font_title = 19;
 font_legend = 10;
 
-load('mesh_data\data_setup_coarse_1_refinement_2_ufv_x_revert_source_2.mat')
+ 
 fonts_data.font_title = font_title;
 fonts_data.font_label = font_label;
 
@@ -27,12 +34,15 @@ T_dir = 0;
 I_s   = 100; %source intensity
 
 
-data_name = "data_setup_coarse_1_refinement_2_ufv_x_revert_source_2";               % Change here for different mesh  
+data_name = "data_setup_fine_grid";               % Change here for different mesh  
 data_name = strcat("mesh_data",sslash,data_name);    
 load(data_name);
 B_dd_u = FOM.B_dd_u;
+
 B_dd_f = FOM.B_dd_f;
+
 B_dl = FOM.B_dl;
+
 
 A = mu_0*FOM.A_d_ocp+FOM.A_d_robin_ocp;  % + FOM.M_ocp;
 F = FOM.F_ocp;
@@ -111,15 +121,49 @@ Aeq = [];
 beq = []; 
 ub= [];
 
-% tic
-% [xsol,fval,history,grad_norm,lambda] = runfmincon_optimization(@( x ) cost_with_grad_optimization( x , param) , @( x ) constraint( x , param ) , z_0 , lb );
-% toc
-% fval_history = [ history.fval ];
+param.constraint_type = 'u_f_v';
+param.control_type = 'u_f_v';
+param.b_c = 'dirichlet';
+param.B_dd=FOM.B_dd;
 
-% u_opt = xsol( 1 : Nu ,1 );
-% f_opt = xsol( Nu + 1 : 2 * Nu , 1 );
-% v_opt = xsol( 2 * Nu + 1 : end , 1 );
-load( 'output_ufv_with_Hessian.mat', 'u_opt' , 'f_opt' , 'v_opt' )
+
+switch plot_type 
+
+    case{'fine_mesh'}
+        
+        tic
+        [xsol,fval,history,grad_norm,lambda] = runfmincon_ufv_Hessian(@( x ) cost_with_grad_optimization( x , param) , @( x ) constraint( x , param ) , param , z_0 , lb );
+        toc
+        fval_history = [ history.fval ];
+
+        u_opt = xsol( 1 : Nu ,1 );
+        f_opt = xsol( Nu + 1 : 2 * Nu , 1 );
+        v_opt = xsol( 2 * Nu + 1 : end , 1 );
+        
+        loglog( 1 : length( fval_history ) , fval_history , 'Linewidth' , 1 ) 
+        title( "fmincon, \beta_{g} = " + num2str( beta_g ) + ", \gamma_{g} = " + num2str( gamma_g ) + ", \xi_{g} = " + num2str( xi_g ) )
+        ylabel( '$J_{history}$' , 'Interpreter' , 'Latex' , 'FontSize',20 )
+        xlabel( '$Iterations$' , 'Interpreter' , 'Latex' , 'FontSize',20 )
+        figure()
+        norm_grad = grad_norm;
+        isnotzerograd = find( norm_grad < 1.5 );
+        loglog( 1 :  length( isnotzerograd ), norm_grad( isnotzerograd ), 'Linewidth' , 1)
+        ylabel( '$\nabla{J}_{history}$' , 'Interpreter' , 'Latex' , 'FontSize',20 )
+        xlabel( '$Iterations$' , 'Interpreter' , 'Latex' , 'FontSize',20 )
+
+    case{'coarse_mesh_interp'}
+
+        load('output_ufv_stationary.mat' , 'u_opt','f_opt','v_opt')
+        u_opt_coarse = u_opt;   f_opt_coarse = f_opt;   v_opt_coarse = v_opt; 
+        
+        u_opt= FOM.Interp_mat * u_opt;
+        f_opt= FOM.Interp_mat * f_opt;
+        v_opt= FOM.Interp_mat * v_opt;
+
+end 
+
+
+
 B_u = spmatrix(ttv(B_dd_u,u_opt,3));                      % tensor toobox functions to multiply tensor B_dd and a vector u_opt, returns a sparse matrix
 B_f = spmatrix( ttv( B_dd_f , f_opt , 3 ) );
 B_v = spmatrix( ttv( B_dl , v_opt , 3 ) );
@@ -136,6 +180,7 @@ if param.T_dir~= 0
 end
 y_opt      = (A+B_u+B_v+B_f)  \ (I_s*F);                          % optimal state 
 p_opt      = (A+B_u+B_v+B_f)' \ (M_o*(y_opt-E*z));                % optimal adjoint
+
 
 num_mte_star = sum( ( FOM.E_obs * y_opt - FOM.E_obs * param.E * param.z ) .^ 2 );
 num_mte = sum( ( FOM.E_obs * y - FOM.E_obs * param.E * param.z  ) .^ 2 );
@@ -160,7 +205,7 @@ end
 
 %% Plot of the eigenvalues 
 ctrl_data.name = "passive_control_u_fom";
-ctrl_data.y    =lambda_2;
+ctrl_data.y    =lambda_1;
 ctrl_data.mesh = FOM.MESH;
 
 ctrl_plot_data.title = "$Eigenvalue\:\lambda_{2}$";
@@ -340,15 +385,13 @@ fig(length(fig)+1)  = figure;
 [fig] = plot_field(fig,cl_data,cl_plot_data,fonts_data);
 
 
+ 
 %%
 
-
-
 tracking_difference = FOM.E_obs * y_opt - FOM.E_obs * param.E * param.z;
+ 
 yf = zeros(Nz,1);
 yf( FOM.observation_basis_index,1 ) = abs(tracking_difference);
-Nzno = setdiff( 1: Nz , FOM.observation_basis_index );
-% yf( Nzno ) = 1000;
 sc_data.y    = full(yf);
 sc_data.mesh = FOM.MESH;
 
@@ -358,18 +401,15 @@ sc_data.reduced.elements     = state_elements;
 sc_data.reduced.indexes      = FOM.nodes_ocp;
 
 min_plot = min( min( tracking_difference ) , min( tracking_difference )  );
-min_plot = min( min_plot , min( tracking_difference ) );
 max_plot = max( max( tracking_difference ) , max( tracking_difference ) );
-max_plot = max( max_plot , max( tracking_difference ) );
 max_max = max( abs( min_plot ) , max_plot );
 sc_plot_data.limits = [-max_max , max_max];
-%sc_plot_data.limits = [min(tracking_difference) max(tracking_difference)];
-%sc_plot_data.limits = [min(min(tracking_difference),min(tracking_difference_not_optimal)) max(max(tracking_difference),max(tracking_difference_not_optimal))];
-%sc_plot_data.limits = [min(min(tracking_difference_ipopt),min(tracking_difference_fmincon)) max(max(tracking_difference_ipopt),max(tracking_difference_fmincon))];
 sc_plot_data.title  = "tracking error";
  fig(length(fig)+1)  = figure;
  [fig] = plot_field(fig,sc_data,sc_plot_data,fonts_data);
-hold on 
+  hold on 
+
+ 
 r = 0.2;
 th = 0:pi/50:2*pi;
 x = 0;
@@ -378,9 +418,7 @@ x_circle = r * cos(th) + x;
 y_circle = r * sin(th) + y;
 circles = plot(x_circle, y_circle);
 fill(x_circle, y_circle, 'white')
-% hold off
-axis equal
-% get_grey_obs_scrofa(FOM.shape.outer_vert,FOM.shape.obs_vert);
+
 r=0.2;
 R=0.4;
 xf = 0;
@@ -394,3 +432,7 @@ X = Xf + R*cos(t);
 Y = Yf + R*sin(t);
 fill(X,Y, 'black');
 fill(x,y, 'white');
+
+
+
+

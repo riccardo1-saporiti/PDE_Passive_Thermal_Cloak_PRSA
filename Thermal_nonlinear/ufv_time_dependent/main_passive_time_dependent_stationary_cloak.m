@@ -2,13 +2,15 @@ clc
 clearvars
 close all
 
+%Plot Figure 15
+
 if ispc
     sslash = '\';
 elseif isunix
     sslash = '/';
 end
 
-addpath("useful_functions");
+addpath("useful_functions" , "results_time_dependent");
 
 
 % Setup fonts for plots
@@ -28,7 +30,7 @@ I_s   = 100; %source intensity
 
 
 %% Assemble matrices
-data_name = "data_setup_coarse_1_refinement_2_ufv";             
+data_name = "data_setup_coarse_grid";             
 data_name = strcat("mesh_data",sslash,data_name);    
 load(data_name);
 
@@ -125,54 +127,6 @@ for t = ( t0 + dt ) : dt : tf
     z_vect_cost( Ny * tt + 1 : Ny * ( tt + 1 ) ) = E * z_new;
     y_unc_times( : , tt + 1 ) = y_i;
     y_vect( Ny * tt + 1 : Ny * ( tt + 1 ) ) = y_i;
-
-    %%%Uncomment to plot the reference and the uncontrolled field
-% %         if rem( round( t / dt ) , 1 ) == 0
-% %         
-% %             fig = gobjects(0);
-% %             set(0,'DefaultFigureVisible','on');
-% %             
-% %             
-% %             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Scattered field
-% %             ref_data.name = "reference";
-% %             ref_data.y    = full(z_i);
-% %             ref_data.mesh = FOM.MESH;
-% %             
-% %             ref_plot_data.limits = [min(min(z_ss)) max(max(z_ss))];
-% %             ref_plot_data.title  = "Reference";
-% %             ref_plot_data.tt = tt ;
-% %             ref_plot_data.dt = dt;
-% %             fig(length(fig)+1)  = figure;
-% %              plot_field(fig,ref_data,ref_plot_data,fonts_data);
-% % 
-% % % %             fig = gobjects(0);
-% % % %             set(0,'DefaultFigureVisible','on');
-% % % % 
-% % % %             sc_data.name = "uncloaked";
-% % % %             yf = zeros( size( y_unc_times ) );
-% % % %             yf( boundary_dof_ocp , : ) = T_dir;
-% % % %             %yf( FOM.nodes_ocp_in ) = y_opt
-% % % %             yf( FOM.observation_basis_index, tt ) = FOM.E_obs * y_unc_times( : , tt );
-% % % %             sc_data.y    = yf;
-% % % %             sc_data.mesh = FOM.MESH;
-% % % %             
-% % % %             [state_elements,state_boundaries] = get_reduced_mesh(FOM.MESH,FOM.nodes_ocp);
-% % % %             sc_data.reduced.vertices     = FOM.MESH.vertices(:,FOM.nodes_ocp);
-% % % %             sc_data.reduced.elements     = state_elements; 
-% % % %             sc_data.reduced.indexes      = FOM.nodes_ocp;
-% % % %             
-% % % %             sc_plot_data.limits = [min(z_ss) max(z_ss)];
-% % % %             sc_plot_data.title  = "uncloaked";
-% % % %             sc_plot_data.tt = tt;
-% % % %             % Control lives on a reduced mesh, get reduced mesh
-% % % %             sc_plot_data.dt = dt;
-% % % %             fig(length(fig)+1)  = figure;
-% % % %             [fig] = plot_field(fig,sc_data,sc_plot_data,fonts_data);
-% % 
-% % 
-% %         
-% %         end
-
     tt = tt + 1;
 
 end
@@ -186,16 +140,13 @@ y_opt = zeros( ( Nt + 1 ) * Ny , 1 );
 p_opt = zeros( ( Nt + 1 ) * Ny , 1 );
 y_old = y_opt( 1 : Ny );          %initial condition on the state
 
-load( 'output_ufv_with_Hessian_stationary.mat' , 'u_opt','f_opt','v_opt' )
+load( 'output_ufv_stationary.mat' , 'u_opt','f_opt','v_opt' )
 u_opt = [ zeros( Nu , 1 ) ; repmat( u_opt , ( Nt ) , 1 ) ];
 f_opt = [ zeros( Nu , 1 ) ; repmat( f_opt , ( Nt ) , 1 ) ];
 v_opt = [ zeros( Nu , 1 ) ; repmat( v_opt , ( Nt ) , 1 ) ];
 
 
 lext =length( u_opt( Nu + 1 : end ) );
-% u_opt = [ zeros( Nu , 1 ) ; xsol( 1 : lext) ];
-% f_opt=[zeros( Nu, 1) ; xsol( lext+1 : 2*lext)];
-% v_opt=[zeros(Nu,1);xsol(2* lext +1:3*lext)];
 
 
 ii = 1; 
@@ -274,11 +225,9 @@ ctrl_data.reduced.vertices     = FOM.MESH.vertices(:,FOM.control_basis_index);
 ctrl_data.reduced.elements     = reduced_control_elements; 
 ctrl_data.reduced.indexes      = 1:length(FOM.control_basis_index);
 fig(length(fig)+1)  = figure;
-plot_field(fig,ctrl_data,ctrl_plot_data,fonts_data);
+plot_field_td(fig,ctrl_data,ctrl_plot_data,fonts_data);
 
 %%
-%Select with i_times the time instant at which display the plot, select
-%from i_times = 2 on, since the controls are initialized at 0
 
 fig = gobjects(0);
 set(0,'DefaultFigureVisible','on');
@@ -298,11 +247,9 @@ ctrl_data.reduced.vertices     = FOM.MESH.vertices(:,FOM.control_basis_index);
 ctrl_data.reduced.elements     = reduced_control_elements; 
 ctrl_data.reduced.indexes      = 1:length(FOM.control_basis_index);
 fig(length(fig)+1)  = figure;
-plot_field(fig,ctrl_data,ctrl_plot_data,fonts_data);
+plot_field_td(fig,ctrl_data,ctrl_plot_data,fonts_data);
 
 %%
-%Select with i_times the time instant at which display the plot, select
-%from i_times = 2 to 10, since the controls are initialized at 0
 
 fig = gobjects(0);
 set(0,'DefaultFigureVisible','on');
@@ -322,7 +269,7 @@ ctrl_data.reduced.vertices     = FOM.MESH.vertices(:,FOM.control_basis_index);
 ctrl_data.reduced.elements     = reduced_control_elements; 
 ctrl_data.reduced.indexes      = 1:length(FOM.control_basis_index);
 fig(length(fig)+1)  = figure;
-plot_field(fig,ctrl_data,ctrl_plot_data,fonts_data);
+plot_field_td(fig,ctrl_data,ctrl_plot_data,fonts_data);
 
 % % 
 
@@ -346,12 +293,11 @@ ctrl_data.reduced.vertices     = FOM.MESH.vertices(:,FOM.control_basis_index);
 ctrl_data.reduced.elements     = reduced_control_elements; 
 ctrl_data.reduced.indexes      = 1:length(FOM.control_basis_index);
 fig(length(fig)+1)  = figure;
-plot_field(fig,ctrl_data,ctrl_plot_data,fonts_data);
+plot_field_td(fig,ctrl_data,ctrl_plot_data,fonts_data);
 
 
 %%
-%Select with i_times the time instant at which display the plot: select
-%from i_times = 1 to 10
+
 Ny = size( y_times , 1 );
 i_times = 15;
 fig = gobjects(0);
@@ -377,7 +323,7 @@ sc_plot_data.tt = i_times;
 % Control lives on a reduced mesh, get reduced mesh
 sc_plot_data.dt = dt;
 fig(length(fig)+1)  = figure;
-plot_field(fig,sc_data,sc_plot_data,fonts_data);
+plot_field_td(fig,sc_data,sc_plot_data,fonts_data);
 
 
 
@@ -397,7 +343,7 @@ ref_plot_data.title  = "Reference";
 ref_plot_data.tt = i_times;
 ref_plot_data.dt = dt;
 fig(length(fig)+1)  = figure;
- plot_field(fig,ref_data,ref_plot_data,fonts_data);
+ plot_field_td(fig,ref_data,ref_plot_data,fonts_data);
 
 %%
 
@@ -426,7 +372,7 @@ sc_plot_data.tt = i_times;
 % Control lives on a reduced mesh, get reduced mesh
 sc_plot_data.dt = dt;
 fig(length(fig)+1)  = figure;
-[fig] = plot_field(fig,sc_data,sc_plot_data,fonts_data);
+[fig] = plot_field_td(fig,sc_data,sc_plot_data,fonts_data);
 
 %%
 %Plot of the first eigenvectors
@@ -451,40 +397,7 @@ title( '$Eigenvector\:w_{1}$' , 'Interpreter' , 'Latex' )
 
 
 
-%%
-M_G = zeros( Ny * ( Nt + 1 ) );
 
-for ii = 1 : Nt + 1 
-    M_G( Ny * ( ii - 1 ) + 1 : Ny * ii  , Ny * ( ii - 1 ) + 1 : Ny * ii ) = M_o;
-end
-
-M_G( 1 : Ny , 1 : Ny ) = M_G( 1 : Ny , 1 : Ny ) * ( 1 - theta );
-M_G( end - Ny + 1 : end , end - Ny + 1 : end ) = M_G( end - Ny + 1 : end , end - Ny + 1 : end ) * theta;
-
-
-eta_y_history =zeros( size( u_times, 2 ) , 1 );
-param.E_obs = FOM.E_obs;
-intqz_hist =zeros( size( u_times, 2 ) , 1 );
-
-for i_times = 1 : size(u_times,2)
-    intqz_hist( i_times ) = ( y_times( : , i_times ) - param.E * z_times(:,i_times))' * M_G( Ny*(i_times-1)+1 : Ny*i_times , Ny*(i_times-1)+1:Ny*i_times ) * ( y_times(:,i_times)-param.E*z_times(:,i_times));
-    num_mte_star = sum( ( param.E_obs * y_times( : , i_times) - param.E_obs * param.E* z_times(:,i_times) ) .^ 2 );
-    num_mte = sum( (  param.E_obs * y_unc_times - param.E_obs * param.E *z_times(:,i_times) ) .^ 2);
-    den_mte = size(A_u , 1 );
-    MTE_star = sqrt( num_mte_star / den_mte );
-    MTE = sqrt( num_mte / den_mte );
-    eta_y_history( i_times ) = abs( MTE - MTE_star ) / ( MTE );
-end
-figure()
-plot( 1 : length( eta_y_history) , eta_y_history , 'o-'  )
-title( '$Tracking\:Efficiency\:\eta$' , 'Interpreter' , 'Latex' , 'Fontsize' , 20 ) 
-ylabel( '$\eta\:values$' , 'Interpreter' , 'Latex' , 'Fontsize' , 20 )
-xlabel( '$Time\:[s]$' , 'Interpreter' , 'Latex' , 'Fontsize' , 20 )
-
-figure()
-plot( 1 : length( intqz_hist) , 1 - intqz_hist , 'o-'  )
-title('$1-||q_{opt}-z||^{2}_{L^2(\Omega_{obs})}$' , 'Interpreter' , 'Latex' , 'Fontsize' , 20 )
-xlabel('$Time\:[s]$', 'Interpreter' , 'Latex' , 'Fontsize' , 20 )
 %%
 %tracking error
 y_track = y_times( : , end );
@@ -511,17 +424,14 @@ sc_plot_data.limits = [min(tracking_difference) max(tracking_difference)];
 sc_plot_data.title  = "tracking error";
 sc_plot_data.tt = 1;
  fig(length(fig)+1)  = figure;
- [fig] = plot_field(fig,sc_data,sc_plot_data,fonts_data);
-
- %% Compute norm \| \|_{L^{2}(0,T;L^{2}(\Omega_{obs}))} 
-w = ones( length( intqz_hist ) , 1 );
-w( 1 ) = 0.5;
-w( end ) = 0.5;
-norm_l2l2 = ( w' * intqz_hist * dt );
-
+ [fig] = plot_field_td(fig,sc_data,sc_plot_data,fonts_data);
 
 %% Tracking error field 
-i_times = 6;
+i_times = 15;
+y_times_st = y_times; 
+
+load('output_ufv_time_depependent.mat' , 'y_times' )
+y_times_td = y_times ;
 
 tracking_difference = FOM.E_obs * y_times_td( : , i_times ) - FOM.E_obs * param.E * z_times( : , i_times );
 tracking_difference_st = FOM.E_obs * y_times_st( : , i_times ) - FOM.E_obs * param.E  * z_times( : , i_times );
@@ -545,7 +455,7 @@ sc_plot_data.title  = "tracking error";
 sc_plot_data.tt = i_times;
 sc_plot_data.dt = dt;
 fig(length(fig)+1)  = figure;
-plot_field(fig,sc_data,sc_plot_data,fonts_data);
+plot_field_td(fig,sc_data,sc_plot_data,fonts_data);
 
   hold on 
 r = 0.2;
@@ -556,31 +466,6 @@ x_circle = r * cos(th) + x;
 y_circle = r * sin(th) + y;
 circles = plot(x_circle, y_circle);
 fill(x_circle, y_circle, 'white')
-% get_grey_obs_scrofa( to_save.shape.outer_vert , to_save.shape.obs_vert )  
-% hold off
-
-% 
-% outer_control_idx = intersect( FOM.observation_basis_index ,FOM.control_basis_index , 'stable' );
-% x = FOM.MESH.vertices(1,outer_control_idx);
-% y = FOM.MESH.vertices(2,outer_control_idx);
-% 
-% pgon_int = polyshape(x,y,'Simplify',true);
-% 
-% P = [x; y]; % coordinates / points 
-% c = mean(P,2); % mean/ central point 
-% d = P-c ; % vectors connecting the central point and the given points 
-% th = atan2(d(2,:),d(1,:)); % angle above x axis
-% [th, idx] = sort(th);   % sorting the angles 
-% P = P(:,idx); % sorting the given points
-% P = [P P(:,1)]; % add the first at the end to close the polygon 
-% % plot( P(1,:), P(2,:), '.-r');
-% 
-% x = [ P( 1 , : ) nan x_circle]; 
-% y = [ P( 2 , : ) nan y_circle]; 
-% pgon_int = polyshape(x,y,'Simplify',true);
-% 
-% plot(pgon_int,'FaceColor','black','FaceAlpha',1)
-% return 
 
 
 r=0.2;

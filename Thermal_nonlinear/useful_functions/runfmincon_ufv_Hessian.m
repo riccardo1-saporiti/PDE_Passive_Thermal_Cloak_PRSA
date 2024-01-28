@@ -1,4 +1,4 @@
-function [xsol,fval,history,grad_norm,lambda] = runfmincon_uv_Hessian( cost_with_grad_param , constraint ,  param , z_0 , lb )
+function [xsol,fval,history,grad_norm,lambda] = runfmincon_ufv_Hessian( cost_with_grad_param , constraint ,  param , z_0 , lb )
 
 % % history.x = [];
 history.fval = [];
@@ -22,7 +22,7 @@ objfun = cost_with_grad_param;
            'OutputFcn',@outfun,'OptimalityTolerance', 0, ...
     'StepTolerance', 0, ...
     'MaxFunctionEvaluations', inf,...
-    'MaxIterations', 4000 , 'FiniteDifferenceType' , 'central' , 'SubproblemAlgorithm' , 'cg' , 'HessianMultiplyFcn', @HessMultFcn );
+    'MaxIterations', 2000 , 'FiniteDifferenceType' , 'central' , 'SubproblemAlgorithm' , 'cg' , 'HessianMultiplyFcn', @HessMultFcn );
 %options=optimset('Algorithm','sqp','ScaleProblem','obj-and-constr','DerivativeCheck','off','GradObj','on','TolX',1e-16,'TolFun',1e-16,'MaxFunEvals',inf,'MaxIter',6000,'Display','iter');
 
 [xsol,fval,~,~,lambda] = fmincon(objfun,z_0,Acon,b,Aeq,beq,lb,ub,NL_con,options);
