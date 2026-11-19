@@ -1,3 +1,7 @@
+GitHub repository to generate the figures for the paper published on PRSA
+
+[An optimal control strategy to design passive thermal cloaks of arbitrary shape](https://doi.org/10.1098/rspa.2023.0646)
+
 Code is tested on MATLAB R2022a, the Tensor Toolbox used is version 3.2.1.
 
 Run setPath.m to set up the paths involving the RedbKit package (https://redbkit.github.io/redbKIT/) (add dependent paths), the Tensor Toolbox, necessary to run the codes inside the folder Thermal_nonlinear, can be downloaded from: https://www.tensortoolbox.org/. The code is tested with the version of the Tensor Toolbox: v3.2.1 (https://gitlab.com/tensors/tensor_toolbox/-/releases/v3.2.1).
